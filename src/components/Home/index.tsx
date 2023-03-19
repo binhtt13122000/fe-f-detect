@@ -20,43 +20,65 @@ import {
   Button,
   TextField,
 } from "@mui/material";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import axios from "src/axios";
 import LocalStorageUtil from "src/utils/LocalStorageUtil";
-
-function createData(
-  name: string,
-  calories: number,
-  fat: number,
-  carbs: number,
-  protein: number
-) {
-  return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-  createData("Frozen yoghurt", 159, 6.0, 24, 4.0),
-  createData("Ice cream sandwich", 237, 9.0, 37, 4.3),
-  createData("Eclair", 262, 16.0, 24, 6.0),
-  createData("Cupcake", 305, 3.7, 67, 4.3),
-  createData("Gingerbread", 356, 16.0, 49, 3.9),
-];
 
 const Home = () => {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"CREATE" | "UPDATE">("CREATE");
   const [name, setName] = useState("");
+  const [trainURL, setTrainURL] = useState("");
+  const [rooms, setRooms] = useState([]);
+  const [id, setId] = useState("");
+
+  const removeTrainURL = async () => {
+    await axios.put("api/v1/room/update-room", {
+      name: name,
+      trainURL: "",
+      id: id,
+    });
+    window.location.reload();
+  };
+  const deleteRow = async (roomId: string) => {
+    await axios.delete("api/v1/room/delete-room/" + roomId);
+    window.location.reload();
+  };
   const handle = async () => {
     if (type === "CREATE") {
-      const response = await axios.post("api/v1/room/create-room", {
+      await axios.post("api/v1/room/create-room", {
         name: name,
-        email: JSON.parse(LocalStorageUtil.getUser()).sub
+        email: JSON.parse(LocalStorageUtil.getUser()).sub,
       });
-      console.log(response);
+      window.location.reload();
+    } else {
+      await axios.put("api/v1/room/update-room", {
+        name: name,
+        trainURL: trainURL,
+        id: id,
+      });
+      window.location.reload();
     }
     setOpen(false);
     setName("");
+    setTrainURL("");
+    setId("");
   };
+
+  useEffect(() => {
+    const fetch = async () => {
+      const response = await axios.get(
+        `api/v1/room/list-room?email=${
+          JSON.parse(LocalStorageUtil.getUser()).sub
+        }`
+      );
+      if (response.status === 200) {
+        setRooms(response.data);
+      }
+    };
+    fetch();
+  }, []);
 
   return (
     <Fragment>
@@ -77,14 +99,32 @@ const Home = () => {
               label="Tên phòng"
               onChange={(e) => setName(e.target.value)}
               value={name}
+              required
             />
+            <Box sx={{ height: 10 }}></Box>
+            {type === "UPDATE" && (
+              <TextField
+                fullWidth
+                label="Train URL"
+                required
+                onChange={(e) => setTrainURL(e.target.value)}
+                value={trainURL}
+              />
+            )}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Hủy</Button>
-          <Button onClick={() => handle()} autoFocus>
+          <Button
+            onClick={() => handle()}
+            disabled={name === "" || (type === "UPDATE" && trainURL === "")}
+            autoFocus
+          >
             Thực hiện
           </Button>
+          {trainURL !== "" && (
+            <Button onClick={() => removeTrainURL()}>Xóa URL</Button>
+          )}
         </DialogActions>
       </Dialog>
       <Box sx={{ width: "100%" }}>
@@ -127,35 +167,47 @@ const Home = () => {
             <Table sx={{ minWidth: 650 }} aria-label="simple table">
               <TableHead>
                 <TableRow>
+                  <TableCell>STT</TableCell>
                   <TableCell>Tên phòng</TableCell>
+                  <TableCell>TrainURL</TableCell>
                   <TableCell align="right">Số hình ảnh</TableCell>
                   <TableCell align="right">Thao tác</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
+                {rooms?.map((row, index) => (
                   <TableRow
-                    key={row.name}
+                    key={(row as any).name}
                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                   >
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell component="th" scope="row">
-                      {row.name}
+                      <Link to={`/rooms/${(row as any)["_id"]["$oid"]}`}>{(row as any).name}</Link>
                     </TableCell>
-                    <TableCell align="right">{row.calories}</TableCell>
+                    <TableCell>{(row as any)?.trainURL || ""}</TableCell>
+                    <TableCell align="right">{(row as any).name}</TableCell>
                     <TableCell align="right">
                       <Tooltip title={"Chỉnh sửa"}>
                         <IconButton
                           size="large"
                           onClick={() => {
                             setOpen(true);
+                            setName((row as any)?.name || "");
+                            setTrainURL((row as any)?.trainURL || "");
                             setType("UPDATE");
+                            setId((row as any)["_id"]["$oid"]);
                           }}
                         >
                           <ModeEdit />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title={"Xóa"}>
-                        <IconButton size="large" onClick={() => {}}>
+                        <IconButton
+                          size="large"
+                          onClick={() => {
+                            deleteRow((row as any)["_id"]["$oid"]);
+                          }}
+                        >
                           <Delete />
                         </IconButton>
                       </Tooltip>

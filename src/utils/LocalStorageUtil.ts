@@ -7,7 +7,7 @@ class LocalStorageUtils {
       let item = localStorage.getItem(key);
       if (!item) {
         this.setItem(key);
-        return JSON.parse(localStorage.getItem(key) || "{}");
+        return localStorage.getItem(key);
       }
       return JSON.parse(item || "{}");
     }

@@ -30,7 +30,7 @@ const AppBarWithDrawer: React.FC<IAppBarWithDrawer> = (
     setAnchorEl(event.currentTarget);
   };
 
-  const logout = async () => {
+  const logout = () => {
     LocalStorageUtil.clear();
     window.location.reload();
   };
