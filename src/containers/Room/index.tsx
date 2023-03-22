@@ -15,6 +15,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { Link } from "react-router-dom";
 import axios from "src/axios";
+import LocalStorageUtil from "src/utils/LocalStorageUtil";
 
 const Room = () => {
   const [room, setRoom] = useState(null);
@@ -28,13 +29,13 @@ const Room = () => {
       if (response.status === 200) {
         setRoom(response.data);
         const response2 = await axios.get(
-          `api/v1/detect/list-files?folderId=${response.data.imageId}`
+          `api/v1/detect/list-files?folderId=${response.data.imageId}&email=${JSON.parse(LocalStorageUtil.getUser()).sub}`
         );
         if (response2.status === 200) {
           setImages(response2.data?.listFiles);
         }
         const response3 = await axios.get(
-          `api/v1/detect/list-files?folderId=${response.data.labelId}`
+          `api/v1/detect/list-files?folderId=${response.data.labelId}&email=${JSON.parse(LocalStorageUtil.getUser()).sub}`
         );
         if (response3.status === 200) {
           setLabels(response3.data?.listFiles);

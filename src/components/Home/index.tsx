@@ -34,15 +34,24 @@ const Home = () => {
   const [id, setId] = useState("");
 
   const removeTrainURL = async () => {
-    await axios.put("api/v1/room/update-room", {
-      name: name,
-      trainURL: "",
-      id: id,
-    });
+    await axios.put(
+      "api/v1/room/update-room?email=" +
+        JSON.parse(LocalStorageUtil.getUser()).sub,
+      {
+        name: name,
+        trainURL: "",
+        id: id,
+      }
+    );
     window.location.reload();
   };
   const deleteRow = async (roomId: string) => {
-    await axios.delete("api/v1/room/delete-room/" + roomId);
+    await axios.delete(
+      "api/v1/room/delete-room/" +
+        roomId +
+        "?email=" +
+        JSON.parse(LocalStorageUtil.getUser()).sub
+    );
     window.location.reload();
   };
   const handle = async () => {
@@ -53,11 +62,15 @@ const Home = () => {
       });
       window.location.reload();
     } else {
-      await axios.put("api/v1/room/update-room", {
-        name: name,
-        trainURL: trainURL,
-        id: id,
-      });
+      await axios.put(
+        "api/v1/room/update-room?email=" +
+          JSON.parse(LocalStorageUtil.getUser()).sub,
+        {
+          name: name,
+          trainURL: trainURL,
+          id: id,
+        }
+      );
       window.location.reload();
     }
     setOpen(false);
@@ -117,7 +130,7 @@ const Home = () => {
           <Button onClick={() => setOpen(false)}>Hủy</Button>
           <Button
             onClick={() => handle()}
-            disabled={name === "" || (type === "UPDATE" && trainURL === "")}
+            disabled={name === ""}
             autoFocus
           >
             Thực hiện
@@ -182,10 +195,14 @@ const Home = () => {
                   >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell component="th" scope="row">
-                      <Link to={`/rooms/${(row as any)["_id"]["$oid"]}`}>{(row as any).name}</Link>
+                      <Link to={`/rooms/${(row as any)["_id"]["$oid"]}`}>
+                        {(row as any).name}
+                      </Link>
                     </TableCell>
                     <TableCell>{(row as any)?.trainURL || ""}</TableCell>
-                    <TableCell align="right">{(row as any).name}</TableCell>
+                    <TableCell align="right">
+                      {(row as any)?.total || 0}
+                    </TableCell>
                     <TableCell align="right">
                       <Tooltip title={"Chỉnh sửa"}>
                         <IconButton

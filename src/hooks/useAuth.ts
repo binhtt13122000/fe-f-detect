@@ -33,7 +33,7 @@ const useAuth = () => {
             severity: "success",
             children: "Đăng nhập thành công",
           });
-          await axios.get(`api/v1/auth/authorize?email=${responseAccount.data.email}`);
+          // await axios.get(`api/v1/auth/authorize?email=${responseAccount.data.email}`);
           LocalStorageUtil.setUser(responseAccount.data.accessToken);
           window.location.reload();
         }
